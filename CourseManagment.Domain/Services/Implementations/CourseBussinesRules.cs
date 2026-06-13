@@ -1,6 +1,4 @@
-﻿
-
-using CourseManagment.Domain.Interfaces;
+﻿using CourseManagment.Domain.Interfaces;
 using CourseManagment.Domain.Result;
 using CourseManagment.Domain.Services.Interfaces;
 
@@ -14,17 +12,17 @@ namespace CourseManagment.Domain.Services.Implementations
         {
             _courseRepository = courseRepository;
         }
-        public Task<OperactionResult> IsCourseNameUnique(string courseName, CancellationToken cancellationToken)
+        public Task<OperationResult> IsCourseNameUnique(string courseName, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
-        public Task<OperactionResult> IsCourseCodeUnique(string courseCode, CancellationToken cancellationToken)
+        public Task<OperationResult> IsCourseCodeUnique(string courseCode, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
-        public Task<OperactionResult> DoesInstructorExist(int instructorId, CancellationToken cancellationToken)
+        public Task<OperationResult> DoesInstructorExist(int instructorId, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }

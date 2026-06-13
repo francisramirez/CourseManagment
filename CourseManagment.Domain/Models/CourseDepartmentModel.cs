@@ -1,5 +1,5 @@
 ﻿
-
+#nullable enable
 namespace CourseManagment.Domain.Models
 {
     public record CourseDepartmentModel
