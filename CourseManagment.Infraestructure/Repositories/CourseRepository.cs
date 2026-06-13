@@ -1,5 +1,4 @@
-﻿
-using CourseManagment.Domain.Entities;
+﻿using CourseManagment.Domain.Entities;
 using CourseManagment.Domain.Interfaces;
 using CourseManagment.Domain.Models;
 using CourseManagment.Domain.Result;
@@ -7,7 +6,6 @@ using CourseManagment.Domain.Services.Interfaces;
 using CourseManagment.Infraestructure.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CourseManagment.Infraestructure.Repositories
 {
@@ -32,7 +30,7 @@ namespace CourseManagment.Infraestructure.Repositories
             {
                 // Validaciones de campos //
 
-                if (entity is not null)
+                if (entity is null)
                 {
                     result = OperationResult.Fail("Course entity cannot be null.", "INVALID_INPUT");
                     return result;
@@ -76,6 +74,8 @@ namespace CourseManagment.Infraestructure.Repositories
 
                 await _context.Courses.AddAsync(entity);
                 await _context.SaveChangesAsync();
+
+                result = OperationResult.Ok("Course added successfully.");
             }
             catch (Exception ex)
             {
@@ -90,13 +90,6 @@ namespace CourseManagment.Infraestructure.Repositories
             OperationResult result = new OperationResult();
             try
             {
-      
-                //foreach (var item in entities)
-                //{
-                //    await _context.Courses.AddAsync(item);
-                //}
-
-
                 await _context.Courses.AddRangeAsync(entities);
                 await _context.SaveChangesAsync();
                 result = OperationResult.Ok("Courses added successfully.");
@@ -109,29 +102,59 @@ namespace CourseManagment.Infraestructure.Repositories
             return result;
         }
 
-        public Task<IReadOnlyList<Course>> GetAllAsync()
+        public async Task<IReadOnlyList<Course>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            return await _context.Courses
+                .Where(c => !c.Deleted)
+                .ToListAsync();
         }
 
-        public Task<Course?> GetByIdAsync(int id)
+        public async Task<Course?> GetByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            return await _context.Courses
+                .Where(c => c.Id == id && !c.Deleted)
+                .FirstOrDefaultAsync();
         }
 
-        public Task<List<Course>> GetCoursesByDatesdAsync(DateTime startDate, DateTime endDate)
+        public async Task<List<Course>> GetCoursesByDatesdAsync(DateTime startDate, DateTime endDate)
         {
-            throw new NotImplementedException();
+            return await _context.Courses
+                .Where(c => c.StartDate >= startDate && c.EndDate <= endDate && !c.Deleted)
+                .ToListAsync();
         }
 
-        public Task<List<CourseDepartmentModel>> GetCoursesWithDepartmentsAsync()
+        public async Task<List<CourseDepartmentModel>> GetCoursesWithDepartmentsAsync()
         {
-            throw new NotImplementedException();
+            return await (from course in _context.Courses
+                          where !course.Deleted
+                          join department in _context.Departments
+                          on course.DepartmentId equals department.Id into courseDept
+                          from dept in courseDept.DefaultIfEmpty()
+                          select new CourseDepartmentModel
+                          {
+                              CourseId = course.Id,
+                              Title = course.Title,
+                              CourseCode = course.CourseCode,
+                              DepartmentId = dept.Id,
+                              DepartmentName = dept.Name
+                          }).ToListAsync();
         }
 
-        public Task<List<CourseDepartmentModel>> GetCoursesWithDepartmentsAsync(int departmentId)
+        public async Task<List<CourseDepartmentModel>> GetCoursesWithDepartmentsAsync(int departmentId)
         {
-            throw new NotImplementedException();
+            return await (from course in _context.Courses
+                          where course.DepartmentId == departmentId && !course.Deleted
+                          join department in _context.Departments
+                          on course.DepartmentId equals department.Id into courseDept
+                          from dept in courseDept.DefaultIfEmpty()
+                          select new CourseDepartmentModel
+                          {
+                              CourseId = course.Id,
+                              Title = course.Title,
+                              CourseCode = course.CourseCode,
+                              DepartmentId = dept.Id,
+                              DepartmentName = dept.Name
+                          }).ToListAsync();
         }
 
 
@@ -156,6 +179,8 @@ namespace CourseManagment.Infraestructure.Repositories
 
         public async Task<OperationResult> Update(Course entity)
         {
+            OperationResult result = new OperationResult();
+
             Course courseToUpdate = await _context.Courses.FindAsync(entity.Id);
 
             if (courseToUpdate is null)
@@ -164,7 +189,7 @@ namespace CourseManagment.Infraestructure.Repositories
             }
 
 
-            if (entity is not null)
+            if (entity is null)
             {
                 result = OperationResult.Fail("Course entity cannot be null.", "INVALID_INPUT");
                 return result;
@@ -230,7 +255,7 @@ namespace CourseManagment.Infraestructure.Repositories
             {
                 _logger.LogInformation("Checking if the instructor exists for the course. InstructorId: {InstructorId}, CourseId: {CourseId}", instructorId, courseId);
 
-                if (instructorId <= 0 && courseId <= 0)
+                if (instructorId <= 0 || courseId <= 0)
                 {
                     _logger.LogWarning("Instructor ID and Course ID must be greater than zero. InstructorId: {InstructorId}, CourseId: {CourseId}", instructorId, courseId);
                     result = OperationResult.Fail("Instructor ID and Course ID must be greater than zero.", "INVALID_INPUT");
@@ -239,10 +264,15 @@ namespace CourseManagment.Infraestructure.Repositories
 
                 bool instructorExists = await _context.CourseInstructors.AnyAsync(instructor => instructor.PersonId == instructorId
                                                                                && instructor.CourseId == courseId, cancellationToken);
-                if (instructorExists)
+                if (!instructorExists)
+                {
+                    _logger.LogWarning("Instructor does not exist for the specified course. InstructorId: {InstructorId}, CourseId: {CourseId}", instructorId, courseId);
+                    result = OperationResult.Fail("Instructor does not exist for the specified course.", "INSTRUCTOR_NOT_FOUND");
+                }
+                else
                 {
                     _logger.LogInformation("Instructor exists for the specified course. InstructorId: {InstructorId}, CourseId: {CourseId}", instructorId, courseId);
-                    result = OperationResult.Fail("Instructor does exist for the specified course.", "INSTRUCTOR_NOT_FOUND");
+                    result = OperationResult.Ok("Instructor exists for the specified course.");
                 }
             }
             catch (Exception ex)
@@ -264,7 +294,7 @@ namespace CourseManagment.Infraestructure.Repositories
                 _logger.LogInformation("Checking if the course name and code are unique. CourseName: {CourseName}, CourseCode: {CourseCode}", courseName, courseCode);
 
 
-                if (string.IsNullOrEmpty(courseName) && string.IsNullOrEmpty(courseCode))
+                if (string.IsNullOrEmpty(courseName) || string.IsNullOrEmpty(courseCode))
                 {
                     result = OperationResult.Fail("Course name and code cannot be null or empty.", "INVALID_INPUT");
                     return result;
@@ -277,6 +307,10 @@ namespace CourseManagment.Infraestructure.Repositories
                 {
                     _logger.LogWarning("A course with the same name and code already exists. CourseName: {CourseName}, CourseCode: {CourseCode}", courseName, courseCode);
                     result = OperationResult.Fail("A course with the same name and code already exists.", "DUPLICATE_COURSE");
+                }
+                else
+                {
+                    result = OperationResult.Ok("Course name and code are unique.");
                 }
 
             }
