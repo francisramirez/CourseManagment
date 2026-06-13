@@ -6,8 +6,7 @@ namespace CourseManagment.Domain.Services.Interfaces
 {
     public interface ICourseBussinesRules
     {
-            Task<OperationResult> IsCourseNameUnique(string courseName, CancellationToken cancellationToken);
-            Task<OperationResult> IsCourseCodeUnique(string courseCode, CancellationToken cancellationToken);
-            Task<OperationResult> DoesInstructorExist(int instructorId, CancellationToken cancellationToken);
+        Task<OperationResult> IsCourseNameAndCodeUnique(string courseName, string courseCode, CancellationToken cancellationToken);
+        Task<OperationResult> DoesInstructorExist(int instructorId, int courseId, CancellationToken cancellationToken);
     }
 }

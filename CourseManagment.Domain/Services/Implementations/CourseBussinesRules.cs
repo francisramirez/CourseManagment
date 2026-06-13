@@ -8,23 +8,8 @@ namespace CourseManagment.Domain.Services.Implementations
     {
         private readonly ICourseRepository _courseRepository;
 
-        public CourseBussinesRules(ICourseRepository courseRepository)
-        {
-            _courseRepository = courseRepository;
-        }
-        public Task<OperationResult> IsCourseNameUnique(string courseName, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<OperationResult> IsCourseCodeUnique(string courseCode, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<OperationResult> DoesInstructorExist(int instructorId, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
+        public CourseBussinesRules(ICourseRepository courseRepository) => _courseRepository = courseRepository;
+        public async Task<OperationResult> DoesInstructorExist(int instructorId, CancellationToken cancellationToken) => await _courseRepository.DoesInstructorExist(instructorId, cancellationToken);
+        public async Task<OperationResult> IsCourseNameAndCodeUnique(string courseName, string courseCode, CancellationToken cancellationToken) => await _courseRepository.IsCourseNameAndCodeUnique(courseName, courseCode, cancellationToken);
     }
 }
