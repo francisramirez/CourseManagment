@@ -30,6 +30,8 @@ namespace CourseManagment.Infraestructure.Repositories
             {
                 // Validaciones de campos //
 
+                _logger.LogInformation("xldkdkdkd");
+
                 if (entity is null)
                 {
                     result = OperationResult.Fail("Course entity cannot be null.", "INVALID_INPUT");
@@ -66,6 +68,7 @@ namespace CourseManagment.Infraestructure.Repositories
                     return result;
                 }
                 bool isDepartmentValid = await _context.Departments.AnyAsync(department => department.Id == entity.DepartmentId);
+
                 if (!isDepartmentValid)
                 {
                     result = OperationResult.Fail("The specified department does not exist.", "INVALID_DEPARTMENT");
@@ -90,6 +93,7 @@ namespace CourseManagment.Infraestructure.Repositories
             OperationResult result = new OperationResult();
             try
             {
+
                 await _context.Courses.AddRangeAsync(entities);
                 await _context.SaveChangesAsync();
                 result = OperationResult.Ok("Courses added successfully.");
@@ -119,7 +123,9 @@ namespace CourseManagment.Infraestructure.Repositories
         public async Task<List<Course>> GetCoursesByDatesdAsync(DateTime startDate, DateTime endDate)
         {
             return await _context.Courses
-                .Where(c => c.StartDate >= startDate && c.EndDate <= endDate && !c.Deleted)
+                .Where(c => c.CreationDate.Date >= startDate
+                && c.CreationDate.Date <= endDate
+                && !c.Deleted)
                 .ToListAsync();
         }
 
@@ -133,7 +139,7 @@ namespace CourseManagment.Infraestructure.Repositories
                           select new CourseDepartmentModel
                           {
                               CourseId = course.Id,
-                              Title = course.Title,
+                              CourseName = course.Title,
                               CourseCode = course.CourseCode,
                               DepartmentId = dept.Id,
                               DepartmentName = dept.Name
@@ -150,13 +156,12 @@ namespace CourseManagment.Infraestructure.Repositories
                           select new CourseDepartmentModel
                           {
                               CourseId = course.Id,
-                              Title = course.Title,
+                              CourseName = course.Title,
                               CourseCode = course.CourseCode,
                               DepartmentId = dept.Id,
                               DepartmentName = dept.Name
                           }).ToListAsync();
         }
-
 
         public async Task<OperationResult> Remove(Course entity)
         {
@@ -235,11 +240,10 @@ namespace CourseManagment.Infraestructure.Repositories
 
             courseToUpdate.Title = entity.Title;
             courseToUpdate.CourseCode = entity.CourseCode;
-            courseToUpdate.Description = entity.Description;
             courseToUpdate.Credits = entity.Credits;
             courseToUpdate.DepartmentId = entity.DepartmentId;
-            courseToUpdate.ModifiedDate = DateTime.Now;
-            courseToUpdate.UserModified = entity.UserModified;
+            courseToUpdate.ModifyDate = DateTime.Now;
+            courseToUpdate.UserMod = entity.UserMod;
 
             _context.Courses.Update(courseToUpdate);
             await _context.SaveChangesAsync();

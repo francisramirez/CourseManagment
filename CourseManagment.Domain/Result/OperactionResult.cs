@@ -10,9 +10,9 @@ namespace CourseManagment.Domain.Result
 
         public bool IsFailure => !Success;
 
-        protected OperationResult() { }
+        public OperationResult() { }
 
-        private OperationResult(bool success, string message, string? errorCode = null)
+        public OperationResult(bool success, string message, string? errorCode = null)
         {
             Success = success;
             Message = message;
